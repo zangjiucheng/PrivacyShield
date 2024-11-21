@@ -1,0 +1,46 @@
+/* Main window style */
+QMainWindow {
+    background-color: #2E3440; /* Dark background */
+    color: #D8DEE9; /* Light text color */
+    border: none;
+}
+
+/* QLabel style for the image */
+QLabel {
+    background-color: #3B4252; /* Slightly lighter dark background for the label */
+    border: 2px solid #4C566A; /* Subtle border around the image area */
+    border-radius: 10px;
+    padding: 10px;
+    color: #D8DEE9;
+}
+
+/* QPushButton style */
+QPushButton {
+    background-color: #5E81AC; /* Blue button background */
+    color: #ECEFF4; /* White text */
+    border: 1px solid #4C566A; /* Subtle border */
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #81A1C1; /* Lighter blue on hover */
+}
+
+QPushButton:pressed {
+    background-color: #4C566A; /* Darker background on press */
+    border: 1px solid #D8DEE9; /* Change border on press */
+}
+
+QPushButton:disabled {
+    background-color: #3B4252; /* Disabled button background */
+    color: #B48EAD; /* Disabled button text color */
+}
+
+/* Layout margins */
+QWidget {
+    margin: 10px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+}
