@@ -16,6 +16,7 @@ from PySide6.QtCore import Qt, QThread, Signal, QObject, Slot
 import cv2
 
 from tools.basic_info import BasicInfo
+import signal
 
 class Worker(QObject):
     finished = Signal()  # Signal to indicate the worker has finished
@@ -214,6 +215,8 @@ def load_stylesheet():
 
 
 def run():
+    signal.signal(signal.SIGINT, signal.SIG_DFL)  # Allow exiting with Ctrl+C
+
     app = QApplication(sys.argv)
     stylesheet = load_stylesheet()
     app.setStyleSheet(stylesheet)  # Apply the QSS
