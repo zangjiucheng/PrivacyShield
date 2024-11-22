@@ -12,11 +12,25 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
 )
 from PySide6.QtGui import QPixmap, QImage
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal, QObject, Slot
 import cv2
 
 from tools.basic_info import BasicInfo
 
+class Worker(QObject):
+    finished = Signal()  # Signal to indicate the worker has finished
+    error = Signal(str)  # Signal for error handling (optional)
+
+    def __init__(self, function):
+        super().__init__()
+        self.function = function
+
+    def run(self):
+        try:
+            self.function()
+        except Exception as e:
+            self.error.emit(str(e))  # Emit error signal if an exception occurs
+        self.finished.emit()  # Emit finished signal when done
 
 class ImageBlocker(QMainWindow):
     def __init__(self):
@@ -42,14 +56,13 @@ class ImageBlocker(QMainWindow):
         clear_button = QPushButton("Clear Blocks")
         clear_button.clicked.connect(self.clear_blocks)
 
-        ai_detector_button = QPushButton("AI Detector")
-        ai_detector_button.clicked.connect(self.ai_detector)
-
+        self.ai_detector_button = QPushButton("AI Detector")
+        self.ai_detector_button.clicked.connect(lambda: self._start_worker(self.ai_detector))
         button_layout = QHBoxLayout()
         button_layout.addWidget(load_button)
         button_layout.addWidget(save_button)
         button_layout.addWidget(clear_button)
-        button_layout.addWidget(ai_detector_button)
+        button_layout.addWidget(self.ai_detector_button)
 
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
@@ -103,13 +116,37 @@ class ImageBlocker(QMainWindow):
         q_pixmap = QPixmap.fromImage(q_image)
 
         return q_pixmap
+    
+    def _start_worker(self, function):
+        self.thread = QThread()  # Create a new thread
+        self.worker = Worker(function)  # Create the worker and pass the function
+        self.worker.moveToThread(self.thread)  # Move the worker to the thread
 
+        print("Starting worker")
+        # Connect signals and slots
+        self.thread.started.connect(self.worker.run)  # Start the worker
+        self.worker.finished.connect(self.thread.quit)  # Stop the thread when done
+        self.worker.finished.connect(self.worker.deleteLater)  # Clean up the worker
+        self.thread.finished.connect(self.thread.deleteLater)  # Clean up the thread
+        self.worker.error.connect(self._handle_error)  # Handle any errors (optional)
+
+        # Start the thread
+        self.thread.start()
+    
+    def _handle_error(self, error_message):
+        print(f"Error: {error_message}")  # Handle any errors here
+
+    @Slot()
     def ai_detector(self):
-        if self.image_path:
-            self.basic_info = BasicInfo(self.image_path)
-            self.basic_info.ai_detector()
-            self.update_image()
-            self.display_scaled_image()
+        try:
+            self.ai_detector_button.setEnabled(False)
+            if self.image_path:
+                self.basic_info = BasicInfo(self.image_path)
+                self.basic_info.ai_detector()
+                self.update_image()
+                self.display_scaled_image()
+        finally:
+            self.ai_detector_button.setEnabled(True)
 
     def load_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
